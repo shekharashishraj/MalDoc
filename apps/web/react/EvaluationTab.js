@@ -513,7 +513,13 @@ export default function EvaluationTab() {
 
   return h("section", { id: "evaluation", className: "tab-panel active" },
     h("div", { className: "panel-header" },
-      h("h2", null, "Agent-Backend Evaluation"),
+      h("div", { className: "panel-title-row" },
+        h("h2", null, "Agent-Backend Evaluation"),
+        h("div", { className: "threat-badges" },
+          h("img", { src: "/static/adversary-agent.svg", className: "eval-header-img", alt: "Adversary", title: "Adversary Agent" }),
+          h("img", { src: "/static/threat-spider.svg", className: "eval-header-img", alt: "Threat", title: "Threat Spider" }),
+        ),
+      ),
     ),
     h("div", { className: "two-col evaluation-layout" },
       /* Left: Run Evaluation */

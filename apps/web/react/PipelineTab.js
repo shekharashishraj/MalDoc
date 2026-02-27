@@ -54,6 +54,11 @@ export default function PipelineTab() {
   const [dragover, setDragover] = useState(false);
   const [pdfSource, setPdfSource] = useState("upload");
   const [repoOpen, setRepoOpen] = useState(false);
+
+  /* ── Stage 3 planning overrides ── */
+  const [taskDegradation, setTaskDegradation] = useState("none");
+  const [toolMisfire, setToolMisfire] = useState("none");
+  const [resourceInflation, setResourceInflation] = useState("none");
   const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -300,12 +305,23 @@ export default function PipelineTab() {
   const showWarning = state.selectedAttackMechanism !== "auto";
 
   return h("section", { id: "pipeline", className: "tab-panel active" },
+    h("div", { className: "hero-banner" },
+      h("img", { src: "/static/homepage-hero.svg", className: "hero-banner-img", alt: "MALDOC Security Platform" }),
+    ),
     h("div", { className: "panel-header" },
-      h("h2", null, "Adversarial Document Generation"),
+      h("div", { className: "panel-title-row" },
+        h("h2", null, "Adversarial Document Generation"),
+        h("div", { className: "threat-badges" },
+          h("span", { className: "threat-badge pdf-badge", title: "PDF Attack Surface" }, "\uD83D\uDCC4"),
+          h("span", { className: "threat-badge hacker-badge", title: "Adversary Model" }, "\uD83D\uDC80"),
+          h("span", { className: "threat-badge spider-badge", title: "Threat Spider" }, "\uD83D\uDD77\uFE0F"),
+        ),
+      ),
     ),
     h("div", { className: "two-col" },
       /* Left: Controls */
-      h("div", { className: "card fade-in" },
+      h("div", { className: "card fade-in controls-card" },
+        h("div", { className: "corner-sticker", title: "Threat Vector" }, "\uD83D\uDD77\uFE0F"),
         h("h3", null, "\u2699\uFE0F  Controls"),
 
         /* ── PDF source selector: Upload (left) | Repository (right) ── */
@@ -317,7 +333,7 @@ export default function PipelineTab() {
             onClick: () => setPdfSource("upload"),
           },
             h("h4", null,
-              h("span", { className: "source-icon" }, "\u{1F4C1}"),
+              h("span", { className: "source-icon" }, "\uD83D\uDCC4"),
               "File Upload",
             ),
             h("div", {
@@ -337,7 +353,7 @@ export default function PipelineTab() {
                 fileInputRef.current && fileInputRef.current.click();
               },
             },
-              h("span", { className: "upload-zone-icon" }, "\u2B06\uFE0F"),
+              h("img", { src: "/static/pdf-cyber.svg", className: "upload-zone-svg", alt: "PDF upload", draggable: false }),
               h("p", { className: "upload-zone-text" },
                 "Drag & drop a PDF here or ", h("strong", null, "browse"),
               ),
@@ -420,12 +436,15 @@ export default function PipelineTab() {
             ),
           ),
         ),
-        /* Advanced options */
+        /* Expert mode / Advanced options */
+        h("div", { className: "expert-mode-row" },
+          h("span", { className: "expert-mode-badge" }, "Expert mode"),
+          h("span", { className: "expert-mode-bracket" }, "(Advanced options)"),
+        ),
         h("div", { className: "advanced-block" },
-          h("h4", { className: "advanced-heading" }, "Advanced options"),
           h("div", { className: "form-grid advanced-grid" },
             h("div", null,
-              h("label", { htmlFor: "attack-mechanism" }, "Stage 4 mechanism mode"),
+              h("label", { htmlFor: "attack-mechanism" }, "Stage 4 Mechanism Mode"),
               h("select", {
                 id: "attack-mechanism",
                 value: state.selectedAttackMechanism,
@@ -465,13 +484,61 @@ export default function PipelineTab() {
               ),
             ),
           ),
+          /* ── Stage 3 planning overrides ── */
+          h("div", { className: "stage3-planning-block" },
+            h("div", { className: "stage3-planning-header" },
+              h("span", { className: "stage3-icon" }, "\uD83E\uDDE0"),
+              "Stage 3 Planning",
+            ),
+            h("div", { className: "form-grid stage3-grid" },
+              h("div", null,
+                h("label", { htmlFor: "task-degradation" }, "Task Degradation"),
+                h("select", {
+                  id: "task-degradation",
+                  value: taskDegradation,
+                  onChange: (e) => setTaskDegradation(e.target.value),
+                },
+                  h("option", { value: "none" }, "None"),
+                  h("option", { value: "instruction_override" }, "Instruction Override"),
+                  h("option", { value: "context_pollution" }, "Context Pollution"),
+                  h("option", { value: "goal_hijacking" }, "Goal Hijacking"),
+                ),
+              ),
+              h("div", null,
+                h("label", { htmlFor: "tool-misfire" }, "Tool Misfire"),
+                h("select", {
+                  id: "tool-misfire",
+                  value: toolMisfire,
+                  onChange: (e) => setToolMisfire(e.target.value),
+                },
+                  h("option", { value: "none" }, "None"),
+                  h("option", { value: "parameter_injection" }, "Parameter Injection"),
+                  h("option", { value: "api_confusion" }, "API Confusion"),
+                  h("option", { value: "chain_disruption" }, "Chain Disruption"),
+                ),
+              ),
+              h("div", null,
+                h("label", { htmlFor: "resource-inflation" }, "Resource Inflation"),
+                h("select", {
+                  id: "resource-inflation",
+                  value: resourceInflation,
+                  onChange: (e) => setResourceInflation(e.target.value),
+                },
+                  h("option", { value: "none" }, "None"),
+                  h("option", { value: "token_flooding" }, "Token Flooding"),
+                  h("option", { value: "context_bloat" }, "Context Bloat"),
+                  h("option", { value: "recursive_expansion" }, "Recursive Expansion"),
+                ),
+              ),
+            ),
+          ),
         ),
         h("button", {
           id: "run-pipeline",
-          className: "btn btn-primary",
+          className: "btn btn-auto",
           disabled: busy || !hasPdf,
           onClick: runPipeline,
-        }, "\u25B6\uFE0E  Generate Adversarial Doc"),
+        }, "\u25B6\uFE0E  Auto"),
       ),
 
       /* Right: Timeline */
@@ -496,15 +563,17 @@ export default function PipelineTab() {
           ),
         ),
         h(ResultBox, { message: result.message, muted: result.muted, id: "pipeline-result" }),
-        preview && h("div", { className: "preview-grid", id: "pipeline-preview" },
-          h("div", { className: "preview-card" },
-            h("h4", null, "Original Document"),
-            h("iframe", { id: "preview-original", title: "Original document preview", loading: "lazy", src: `/api/files/preview?path=${encodeURIComponent(preview.original)}#toolbar=0` }),
-          ),
-          h("div", { className: "preview-card" },
-            h("h4", null, "Adversarial Document"),
-            h("iframe", { id: "preview-adversarial", title: "Adversarial document preview", loading: "lazy", src: `/api/files/preview?path=${encodeURIComponent(preview.adversarial)}#toolbar=0` }),
-          ),
+      ),
+    ),
+    preview && h("div", { className: "preview-section", id: "pipeline-preview" },
+      h("div", { className: "preview-grid" },
+        h("div", { className: "preview-card" },
+          h("h4", null, "Original Document"),
+          h("iframe", { id: "preview-original", title: "Original document preview", loading: "lazy", src: `/api/files/preview?path=${encodeURIComponent(preview.original)}#toolbar=0` }),
+        ),
+        h("div", { className: "preview-card" },
+          h("h4", null, "Adversarial Document"),
+          h("iframe", { id: "preview-adversarial", title: "Adversarial document preview", loading: "lazy", src: `/api/files/preview?path=${encodeURIComponent(preview.adversarial)}#toolbar=0` }),
         ),
       ),
     ),
