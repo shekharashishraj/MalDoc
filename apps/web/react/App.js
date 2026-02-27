@@ -87,7 +87,7 @@ function AppInner() {
     /* ── Topbar ── */
     h("header", { className: "topbar" },
       h("div", { style: { display: "flex", alignItems: "center", gap: "16px" } },
-        h("img", { src: "/static/maldoc-logo.svg", className: "topbar-logo", alt: "MalDoc" }),
+        h("img", { src: "/static/maldoc-logo.png", className: "topbar-logo", alt: "MalDoc" }),
         h("div", { className: "topbar-tagline" },
           h("p", null, "Modular Red-Teaming Platform for Document Processing AI Agents"),
         ),
