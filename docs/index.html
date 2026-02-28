@@ -52,8 +52,8 @@
         to generate document-layer adversarial PDFs and measure downstream failures in agent workflows.
       </p>
       <p class="callout">
-        Key result: MALDOC induces 72% task degradation while preserving human-visible fidelity, and
-        achieves an aggregated 86% attack success rate across finance, healthcare, and education documents.
+        Key result: under the default planner, MALDOC achieves 86% ASR, with task degradation
+        accounting for 72% of successes while preserving human-visible fidelity.
       </p>
     </section>
 
@@ -135,6 +135,7 @@
       <p>
         Attack success is defined by any propagation signal relative to clean baselines. MALDOC reports
         an aggregated 86% attack success rate, with task degradation accounting for 72% of successes.
+        ASR decomposes into QA-only (21.5%), workflow-only (41.0%), and QA+workflow (33.5%).
         Workflow deviations dominate: 74.5% of successful attacks involve Tool Misfire or state drift.
       </p>
       <p>
@@ -153,14 +154,15 @@
         degradation, Tool Misfire rates, and detection performance.
       </p>
       <div class="results-grid">
-        <img src="assets/img/table-1.png" alt="Table 1: HTI/FGR/VOI results">
-        <img src="assets/img/table-2.png" alt="Table 2: Planner-agnostic ASR">
-        <img src="assets/img/table-3.png" alt="Table 3: Stealthiness evaluation">
-        <img src="assets/img/table-4.png" alt="Table 4: Strategy to injection mapping">
+        <img src="assets/img/table-1.png" alt="Table 1: Semantic edit strategy to injection channel mapping">
+        <img src="assets/img/table-2.png" alt="Table 2: Original-document (O-DOC) performance">
+        <img src="assets/img/table-3.png" alt="Table 3: Adversarial-document (M-DOC) performance">
+        <img src="assets/img/table-4.png" alt="Table 4: Planner-agnostic ASR">
+        <img src="assets/img/table-5.png" alt="Table 5: Stealthiness evaluation">
       </div>
       <figcaption>
-        Table 1: HTI/FGR/VOI evaluation. Table 2: planner-agnostic ASR. Table 3: stealthiness.
-        Table 4: strategy-to-injection channel mapping.
+        Table 1: semantic edit strategies to injection channels. Table 2: O-DOC performance.
+        Table 3: M-DOC performance. Table 4: planner-agnostic ASR. Table 5: stealthiness evaluation.
       </figcaption>
     </section>
 

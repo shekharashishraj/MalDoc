@@ -16,6 +16,7 @@ Evaluated against GPT-4o, Claude Sonnet, and Grok on finance, healthcare, and ed
 ## Key Results
 
 - **Attack Success Rate (ASR): 86%** under the default planner.
+- **ASR breakdown:** QA-only 21.5%, workflow-only 41.0%, QA+workflow 33.5%.
 - **72%** of successful attacks are driven by task degradation.
 - **74.5%** of successes involve structured workflow deviation (Tool Misfire or state drift).
 - **97%** of document pairs show no visible differences in a human spot-check.
@@ -43,12 +44,16 @@ Evaluated against GPT-4o, Claude Sonnet, and Grok on finance, healthcare, and ed
 
 <table>
   <tr>
-    <td><img src="docs/assets/img/table-1.png" alt="Table 1: HTI/FGR/VOI evaluation" /></td>
-    <td><img src="docs/assets/img/table-2.png" alt="Table 2: Planner-agnostic ASR" /></td>
+    <td><img src="docs/assets/img/table-1.png" alt="Table 1: Semantic edit strategies to injection channels" /></td>
+    <td><img src="docs/assets/img/table-2.png" alt="Table 2: Original-document (O-DOC) performance" /></td>
   </tr>
   <tr>
-    <td><img src="docs/assets/img/table-3.png" alt="Table 3: Stealthiness evaluation" /></td>
-    <td><img src="docs/assets/img/table-4.png" alt="Table 4: Strategy to injection channel mapping" /></td>
+    <td><img src="docs/assets/img/table-3.png" alt="Table 3: Adversarial-document (M-DOC) performance" /></td>
+    <td><img src="docs/assets/img/table-4.png" alt="Table 4: Planner-agnostic ASR" /></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/img/table-5.png" alt="Table 5: Stealthiness evaluation" /></td>
+    <td></td>
   </tr>
 </table>
 
