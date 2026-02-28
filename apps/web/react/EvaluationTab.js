@@ -322,6 +322,17 @@ function QAPanel({ baseDir, origName }) {
 
   const canRun = Boolean(baseDir) && questions.length > 0 && !loading;
   const hasGroundTruth = questions.some(q => q.groundTruth && q.groundTruth.length > 0);
+  const normalizeText = (val) => {
+    if (val === null || val === undefined) return "N/A";
+    if (typeof val === "string") return val;
+    if (typeof val === "number" || typeof val === "boolean") return String(val);
+    if (Array.isArray(val)) return val.map((v) => (v == null ? "" : String(v))).join(", ");
+    try {
+      return JSON.stringify(val);
+    } catch (err) {
+      return String(val);
+    }
+  };
 
   return h("div", { className: "qa-panel card fade-in" },
     h("div", { className: "qa-panel-header" },
@@ -409,8 +420,8 @@ function QAPanel({ baseDir, origName }) {
       questions.map((q, i) => {
         const origAns = (results.original    && results.original.answers    && results.original.answers[i])    || {};
         const advAns  = (results.adversarial && results.adversarial.answers && results.adversarial.answers[i]) || {};
-        const oText   = origAns.answer || origAns.a || "N/A";
-        const aText   = advAns.answer  || advAns.a  || "N/A";
+        const oText   = normalizeText(origAns.answer ?? origAns.a);
+        const aText   = normalizeText(advAns.answer  ?? advAns.a);
         const gtText  = (q.groundTruth && q.groundTruth.length) ? q.groundTruth.join(" / ") : null;
         const isDrift = oText !== "N/A" && aText !== "N/A"
           && oText.trim().toLowerCase() !== aText.trim().toLowerCase();
