@@ -603,10 +603,20 @@ def collect_stage5_doc_runs(base_root: str | Path = PIPELINE_RUN_ROOT) -> list[d
                 "resource_inflation":     bool(payload.get("resource_inflation")),
             }
             fired_count = sum(1 for v in attack_vectors.values() if v)
+            # Read domain from stage2 analysis so frontend can show agent backend names
+            domain: str | None = None
+            analysis_path = base_dir / "stage2" / "openai" / "analysis.json"
+            if analysis_path.is_file():
+                try:
+                    domain = json.loads(analysis_path.read_text(encoding="utf-8")).get("domain")
+                except Exception:
+                    pass
+
             rows.append(
                 {
                     "doc_id": payload.get("doc_id", base_dir.name),
                     "scenario": payload.get("scenario"),
+                    "domain": domain,
                     "compromised": payload.get("attack_success"),
                     "clean_matches_gold": payload.get("clean_majority_matches_gold"),
                     "changed_target_fields": payload.get("targeted_field_changed_count", 0),

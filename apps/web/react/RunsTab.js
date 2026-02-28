@@ -202,9 +202,9 @@ function PipelineDetailDrawer({ doc, onClose }) {
 
 /* ── Run Detail Drawer ─────────────────────────────────────── */
 function RunDetailDrawer({ run, onClose }) {
-  const doc = run.raw || run;
-  const meta = SCENARIO_META[run.scenario] || { label: run.scenario || "Unknown", icon: "📋", color: "#6366f1" };
-  const sev = SEVERITY_STYLE[run.severity] || SEVERITY_STYLE.medium;
+  const doc  = run.raw || run;
+  const meta = resolveAgentMeta(run);
+  const sev  = SEVERITY_STYLE[run.severity] || SEVERITY_STYLE.medium;
 
   const changedRows = Object.entries(doc.targeted_field_diffs || {})
     .filter(([, p]) => p && p.changed)
@@ -304,13 +304,13 @@ function RunDetailDrawer({ run, onClose }) {
 
 /* ── Run Card ──────────────────────────────────────────────── */
 function RunCard({ run, onClick }) {
-  const meta = SCENARIO_META[run.scenario] || { label: run.scenario || "Unknown", icon: "📋", color: "#6366f1" };
+  const meta = resolveAgentMeta(run);
   const sev  = SEVERITY_STYLE[run.severity] || SEVERITY_STYLE.medium;
   const firedVectors = Object.entries(run.attack_vectors || {}).filter(([, v]) => v);
   const docIdShort   = (run.doc_id || "").slice(0, 8) + "…";
 
   return h("article", { className: `run-card${run.compromised ? " compromised" : ""}`, onClick },
-    /* Top row: scenario icon + severity tag */
+    /* Top row: agent icon + severity tag */
     h("div", { className: "run-card-top" },
       h("span", { className: "run-card-icon" }, meta.icon),
       h("span", {
@@ -319,7 +319,7 @@ function RunCard({ run, onClick }) {
       }, sev.label),
     ),
 
-    /* Title */
+    /* Title — agent backend name matching Evaluation tab */
     h("h4", { className: "run-card-title" }, meta.label),
 
     /* Doc ID */
