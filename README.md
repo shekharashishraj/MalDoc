@@ -1,4 +1,60 @@
-# maldoc
+![MALDOC logo](docs/assets/img/logo.png)
+
+# MALDOC: A Modular Red-Teaming Platform for Document Processing AI Agents
+
+[Project Page](https://shekharashishraj.github.io/MalDoc/) · [Paper](docs/assets/maldoc_paper.pdf) · [Demo](https://maldoc-demo.anonymous-acl.org) · [Video](https://www.youtube.com/watch?v=OLKtiIROjWw) · [Code](https://github.com/shekharashishraj/MalDoc)
+
+**Authors:** Ashish Raj Shekhar*, Priyanuj Bordoloi*, Shiven Agarwal*, Yash Shah, Sandipan De, Vivek Gupta  
+**Affiliation:** Arizona State University · *Equal contribution*
+
+## Overview
+
+Document-processing AI agents can be compromised by attacks that exploit discrepancies between rendered PDF content and machine-readable representations. MALDOC is a modular red-teaming system that generates document-layer adversarial PDFs and measures how failures propagate through agent workflows.
+
+Evaluated against GPT-4o, Claude Sonnet, and Grok on finance, healthcare, and education documents, MALDOC induces **72% task degradation** while preserving human-visible fidelity.
+
+## Key Results
+
+- **Attack Success Rate (ASR): 86%** under the default planner.
+- **72%** of successful attacks are driven by task degradation.
+- **74.5%** of successes involve structured workflow deviation (Tool Misfire or state drift).
+- **97%** of document pairs show no visible differences in a human spot-check.
+
+## Figures
+
+**System Overview (Figure 1)**
+
+![MALDOC system overview](docs/assets/img/figure-1.png)
+
+**Demo Walkthrough (Figure 2)**
+
+<table>
+  <tr>
+    <td><img src="docs/assets/img/demo-home-left.png" alt="Demo: creation view" /></td>
+    <td><img src="docs/assets/img/demo-home-right.png" alt="Demo: stage timeline view" /></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/img/demo-eval-left.png" alt="Demo: evaluation setup" /></td>
+    <td><img src="docs/assets/img/demo-eval-right.png" alt="Demo: propagation metrics" /></td>
+  </tr>
+</table>
+
+**Selected Tables**
+
+<table>
+  <tr>
+    <td><img src="docs/assets/img/table-1.png" alt="Table 1: HTI/FGR/VOI evaluation" /></td>
+    <td><img src="docs/assets/img/table-2.png" alt="Table 2: Planner-agnostic ASR" /></td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/img/table-3.png" alt="Table 3: Stealthiness evaluation" /></td>
+    <td><img src="docs/assets/img/table-4.png" alt="Table 4: Strategy to injection channel mapping" /></td>
+  </tr>
+</table>
+
+---
+
+## Technical Documentation
 
 A multi-stage PDF parsing and analysis pipeline:
 
@@ -14,6 +70,10 @@ Output is written under **one folder per PDF** (named by the PDF stem), with sub
 
 ## Table of contents
 
+- [Overview](#overview)
+- [Key Results](#key-results)
+- [Figures](#figures)
+- [Technical Documentation](#technical-documentation)
 - [Architecture](#architecture)
 - [Setup](#setup)
 - [Environment variables](#environment-variables)
