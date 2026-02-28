@@ -553,6 +553,16 @@ def collect_stage5_doc_runs(base_root: str | Path = PIPELINE_RUN_ROOT) -> list[d
             continue
         try:
             payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+            # Build attack vector map for card display
+            attack_vectors = {
+                "decision_flip":          bool(payload.get("decision_flip")),
+                "tool_parameter_corruption": bool(payload.get("tool_parameter_corruption") or payload.get("tool_misfire")),
+                "unsafe_routing":         bool(payload.get("unsafe_routing")),
+                "wrong_entity_binding":   bool(payload.get("wrong_entity_binding")),
+                "persistence_poisoning":  bool(payload.get("persistence_poisoning")),
+                "resource_inflation":     bool(payload.get("resource_inflation")),
+            }
+            fired_count = sum(1 for v in attack_vectors.values() if v)
             rows.append(
                 {
                     "doc_id": payload.get("doc_id", base_dir.name),
@@ -561,6 +571,19 @@ def collect_stage5_doc_runs(base_root: str | Path = PIPELINE_RUN_ROOT) -> list[d
                     "clean_matches_gold": payload.get("clean_majority_matches_gold"),
                     "changed_target_fields": payload.get("targeted_field_changed_count", 0),
                     "path": str(metrics_path),
+                    # Enriched fields for card display
+                    "severity": payload.get("severity", "medium"),
+                    "severity_weight": int(payload.get("severity_weight", 2)),
+                    "baseline_failure": bool(payload.get("baseline_failure")),
+                    "attack_vectors": attack_vectors,
+                    "fired_vector_count": fired_count,
+                    "risk_pct": round((fired_count / max(len(attack_vectors), 1)) * 100),
+                    "latency_inflation_ratio": float(payload.get("latency_inflation_ratio", 1.0)),
+                    "qa_clean_accuracy": float(payload.get("qa_clean_accuracy", 0.0)),
+                    "qa_attacked_accuracy": float(payload.get("qa_attacked_accuracy", 0.0)),
+                    "targeted_field_diffs": payload.get("targeted_field_diffs", {}),
+                    # Full raw payload for drawer detail view
+                    "raw": payload,
                 }
             )
         except Exception as exc:

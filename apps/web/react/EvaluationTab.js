@@ -55,7 +55,7 @@ const QA_PRESETS = {
 };
 
 /* ── MetricsChart ───────────────────────────────────────────── */
-function MetricsChart({ doc }) {
+export function MetricsChart({ doc }) {
   const attackSuccess   = Boolean(doc.attack_success);
   const taskCorruption  = Boolean(doc.task_corruption !== undefined ? doc.task_corruption : doc.decision_flip);
   const toolMisfire     = Boolean(doc.tool_misfire !== undefined ? doc.tool_misfire : doc.tool_parameter_corruption);
@@ -154,7 +154,7 @@ function MetricsChart({ doc }) {
 }
 
 /* ── FieldDiffSection ───────────────────────────────────────── */
-function FieldDiffSection({ changedRows, changedFallback, doc, scenario }) {
+export function FieldDiffSection({ changedRows, changedFallback, doc, scenario }) {
   const [analysis, setAnalysis]   = useState(null);
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState("");
