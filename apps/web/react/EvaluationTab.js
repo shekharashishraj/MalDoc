@@ -422,7 +422,10 @@ function QAPanel({ baseDir, origName }) {
         const advAns  = (results.adversarial && results.adversarial.answers && results.adversarial.answers[i]) || {};
         const oText   = normalizeText(origAns.answer ?? origAns.a);
         const aText   = normalizeText(advAns.answer  ?? advAns.a);
-        const gtText  = (q.groundTruth && q.groundTruth.length) ? q.groundTruth.join(" / ") : null;
+        const gtValues = Array.isArray(q.groundTruth)
+          ? q.groundTruth
+          : (q.groundTruth !== null && q.groundTruth !== undefined && q.groundTruth !== "" ? [q.groundTruth] : []);
+        const gtText  = gtValues.length ? gtValues.map((v) => normalizeText(v)).join(" / ") : null;
         const isDrift = oText !== "N/A" && aText !== "N/A"
           && oText.trim().toLowerCase() !== aText.trim().toLowerCase();
         // Check if adversarial drifts from ground truth too
@@ -698,11 +701,14 @@ export default function EvaluationTab() {
   const [evalAdvName,  setEvalAdvName]  = useState("");
   const [evalOrigDrag, setEvalOrigDrag] = useState(false);
   const [evalAdvDrag,  setEvalAdvDrag]  = useState(false);
+  const [evalOrigRepo, setEvalOrigRepo] = useState("");
+  const [evalAdvRepo,  setEvalAdvRepo]  = useState("");
 
   const metadata        = state.metadata;
   const evaluation      = state.evaluation;
   const selectedScenario = state.selectedEvalScenario;
   const trials          = state.evalTrials;
+  const availablePdfs   = state.pdfs || [];
 
   const catalog      = getScenarioCatalog(metadata);
   const orderedKeys  = getOrderedScenarioKeys(metadata);
@@ -764,8 +770,27 @@ export default function EvaluationTab() {
 
   useEffect(() => () => stopEvalTimer(), [stopEvalTimer]);
 
+  const formatPdfLabel = useCallback((path) => {
+    const parts = String(path || "").replace(/\\/g, "/").split("/");
+    if (parts.length <= 2) return parts.join("/");
+    return parts.slice(-2).join("/");
+  }, []);
+
   /* ── prepare eval uploads ── */
   const prepareEvalUploads = useCallback(async (sc) => {
+    if (evalOrigRepo || evalAdvRepo) {
+      if (!evalOrigRepo || !evalAdvRepo) {
+        throw new Error("Select both repository PDFs or upload both files.");
+      }
+      const prepared = await apiPost("/api/stage5/prepare-paths", {
+        scenario: sc,
+        original_path: evalOrigRepo,
+        adversarial_path: evalAdvRepo,
+      });
+      dispatch({ type: "SET_EVAL_PREPARED_BASE_DIR", payload: prepared.base_dir || "" });
+      return prepared;
+    }
+
     const originalFile    = evalOriginalRef.current    && evalOriginalRef.current.files[0];
     const adversarialFile = evalAdversarialRef.current && evalAdversarialRef.current.files[0];
     if (!originalFile)    throw new Error("Please upload an original PDF.");
@@ -779,7 +804,7 @@ export default function EvaluationTab() {
     const prepared = await apiPostForm("/api/stage5/prepare-upload", formData);
     dispatch({ type: "SET_EVAL_PREPARED_BASE_DIR", payload: prepared.base_dir || "" });
     return prepared;
-  }, [dispatch]);
+  }, [dispatch, evalOrigRepo, evalAdvRepo]);
 
   /* ── check eligibility ── */
   const checkEligibility = useCallback(async () => {
@@ -897,32 +922,66 @@ export default function EvaluationTab() {
         h("div", { className: "form-grid" },
           h("div", null,
             h("label", null, "Upload Original Doc"),
+            h("select", {
+              className: "repo-select",
+              value: evalOrigRepo,
+              onChange: (e) => {
+                const value = e.target.value;
+                setEvalOrigRepo(value);
+                if (value) {
+                  const name = value.split("/").pop() || value;
+                  setEvalOrigName(name);
+                  if (evalOriginalRef.current) evalOriginalRef.current.value = "";
+                }
+                markDirty();
+              },
+            },
+              h("option", { value: "" }, "Select from repository (optional)"),
+              availablePdfs.map((p) => h("option", { key: p, value: p }, formatPdfLabel(p))),
+            ),
             h("div", {
               className: `upload-zone${evalOrigDrag ? " dragover" : ""}`,
               onDragOver:  (e) => { e.preventDefault(); setEvalOrigDrag(true); },
               onDragLeave: ()  => setEvalOrigDrag(false),
-              onDrop: (e) => { e.preventDefault(); setEvalOrigDrag(false); if (e.dataTransfer.files[0]) { evalOriginalRef.current.files = e.dataTransfer.files; markDirty(); setEvalOrigName(e.dataTransfer.files[0].name); } },
+              onDrop: (e) => { e.preventDefault(); setEvalOrigDrag(false); if (e.dataTransfer.files[0]) { evalOriginalRef.current.files = e.dataTransfer.files; setEvalOrigRepo(""); markDirty(); setEvalOrigName(e.dataTransfer.files[0].name); } },
             },
               h("span", { className: "upload-zone-icon" }, "\uD83D\uDCC4"),
               evalOrigName
                 ? h("div", { className: "selected-file-pill" }, "\uD83D\uDCCE ", evalOrigName, h("button", { className: "pill-clear", onClick: (e) => { e.stopPropagation(); evalOriginalRef.current.value = ""; setEvalOrigName(""); markDirty(); } }, "\u2715"))
                 : h("span", { className: "upload-zone-text" }, h("strong", null, "Choose file"), " or drag & drop"),
-              h("input", { type: "file", accept: ".pdf,application/pdf", ref: evalOriginalRef, onChange: (e) => { markDirty(); setEvalOrigName(e.target.files[0] ? e.target.files[0].name : ""); } }),
+              h("input", { type: "file", accept: ".pdf,application/pdf", ref: evalOriginalRef, onChange: (e) => { setEvalOrigRepo(""); markDirty(); setEvalOrigName(e.target.files[0] ? e.target.files[0].name : ""); } }),
             ),
           ),
           h("div", null,
             h("label", null, "Upload Adversarial Doc"),
+            h("select", {
+              className: "repo-select",
+              value: evalAdvRepo,
+              onChange: (e) => {
+                const value = e.target.value;
+                setEvalAdvRepo(value);
+                if (value) {
+                  const name = value.split("/").pop() || value;
+                  setEvalAdvName(name);
+                  if (evalAdversarialRef.current) evalAdversarialRef.current.value = "";
+                }
+                markDirty();
+              },
+            },
+              h("option", { value: "" }, "Select from repository (optional)"),
+              availablePdfs.map((p) => h("option", { key: p, value: p }, formatPdfLabel(p))),
+            ),
             h("div", {
               className: `upload-zone${evalAdvDrag ? " dragover" : ""}`,
               onDragOver:  (e) => { e.preventDefault(); setEvalAdvDrag(true); },
               onDragLeave: ()  => setEvalAdvDrag(false),
-              onDrop: (e) => { e.preventDefault(); setEvalAdvDrag(false); if (e.dataTransfer.files[0]) { evalAdversarialRef.current.files = e.dataTransfer.files; markDirty(); setEvalAdvName(e.dataTransfer.files[0].name); } },
+              onDrop: (e) => { e.preventDefault(); setEvalAdvDrag(false); if (e.dataTransfer.files[0]) { evalAdversarialRef.current.files = e.dataTransfer.files; setEvalAdvRepo(""); markDirty(); setEvalAdvName(e.dataTransfer.files[0].name); } },
             },
               h("span", { className: "upload-zone-icon" }, "\u26A0\uFE0F"),
               evalAdvName
                 ? h("div", { className: "selected-file-pill" }, "\uD83D\uDCCE ", evalAdvName, h("button", { className: "pill-clear", onClick: (e) => { e.stopPropagation(); evalAdversarialRef.current.value = ""; setEvalAdvName(""); markDirty(); } }, "\u2715"))
                 : h("span", { className: "upload-zone-text" }, h("strong", null, "Choose file"), " or drag & drop"),
-              h("input", { type: "file", accept: ".pdf,application/pdf", ref: evalAdversarialRef, onChange: (e) => { markDirty(); setEvalAdvName(e.target.files[0] ? e.target.files[0].name : ""); } }),
+              h("input", { type: "file", accept: ".pdf,application/pdf", ref: evalAdversarialRef, onChange: (e) => { setEvalAdvRepo(""); markDirty(); setEvalAdvName(e.target.files[0] ? e.target.files[0].name : ""); } }),
             ),
           ),
         ),

@@ -112,6 +112,12 @@ class Stage5DocRequest(BaseModel):
     out_subdir: str = "agent_backend_eval"
 
 
+class Stage5PreparePathsRequest(BaseModel):
+    scenario: str = "auto"
+    original_path: str
+    adversarial_path: str
+
+
 class Stage5BatchRequest(BaseModel):
     base_root: str = str(PIPELINE_RUN_ROOT)
     doc_ids: list[str] | None = None
@@ -158,12 +164,25 @@ def _resolve_local_file(path_text: str) -> Path:
     target = raw if raw.is_absolute() else (Path.cwd() / raw)
     return target.resolve()
 
+def _resolve_project_file(path_text: str) -> Path:
+    target = _resolve_local_file(path_text)
+    try:
+        target.relative_to(PROJECT_ROOT)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Path must be within the project root.")
+    return target
+
 
 def _require_pdf_upload(upload: Any, label: str) -> None:
     filename = (upload.filename or "").strip()
     if not filename:
         raise HTTPException(status_code=400, detail=f"{label} filename is missing.")
     if not filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail=f"{label} must be a PDF file.")
+
+
+def _require_pdf_path(path: Path, label: str) -> None:
+    if not path.name.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail=f"{label} must be a PDF file.")
 
 
@@ -630,6 +649,35 @@ async def stage5_prepare_upload(
                     tmp.unlink()
             except Exception:
                 pass
+
+
+@app.post("/api/stage5/prepare-paths")
+def stage5_prepare_paths(payload: Stage5PreparePathsRequest) -> dict[str, Any]:
+    scenario = str(payload.scenario or "").strip()
+    if not scenario:
+        raise HTTPException(status_code=400, detail="Scenario is required.")
+
+    original_path = _resolve_project_file(payload.original_path)
+    adversarial_path = _resolve_project_file(payload.adversarial_path)
+    if not original_path.is_file():
+        raise HTTPException(status_code=400, detail=f"Original PDF not found: {original_path}")
+    if not adversarial_path.is_file():
+        raise HTTPException(status_code=400, detail=f"Adversarial PDF not found: {adversarial_path}")
+    _require_pdf_path(original_path, "Original document")
+    _require_pdf_path(adversarial_path, "Adversarial document")
+
+    try:
+        return prepare_stage5_uploaded_docs(
+            scenario=scenario,
+            original_pdf_path=original_path,
+            adversarial_pdf_path=adversarial_path,
+            upload_root=".stage5_uploads",
+        )
+    except (ValueError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        log.exception("Stage 5 path preparation failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.post("/api/stage5/doc")

@@ -974,6 +974,17 @@ footer code { background: var(--bg-elevated); padding: 2px 6px; border-radius: 4
   cursor: pointer;
 }
 
+.repo-select {
+  width: 100%;
+  margin-bottom: 10px;
+  background: var(--bg-surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
 .upload-zone input[type="file"] {
   position: absolute;
   inset: 0;
