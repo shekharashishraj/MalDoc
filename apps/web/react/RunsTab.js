@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useAppState } from "./AppContext.js";
 import { apiGet } from "./api.js";
-import { DEFAULT_PIPELINE_RUN_ROOT } from "./constants.js";
+import { DEFAULT_PIPELINE_RUN_ROOT, AGENT_BACKEND_FALLBACK_CATALOG } from "./constants.js";
 import { MetricsChart, FieldDiffSection } from "./EvaluationTab.js";
 
 /* ── Stage metadata ────────────────────────────────────────── */
@@ -15,7 +15,28 @@ const STAGE_STEPS = [
 
 const h = React.createElement;
 
-/* ── Scenario metadata ─────────────────────────────────────── */
+/* ── Agent backend icons & colors (matches Evaluation tab) ─── */
+const AGENT_ICONS  = { healthcare:"🏥", finance:"💰", hr:"👥", insurance:"🛡️", education:"🎓", political:"🏛️", general:"🤖" };
+const AGENT_COLORS = { healthcare:"#ef4444", finance:"#22c55e", hr:"#3b82f6", insurance:"#f59e0b", education:"#a855f7", political:"#a08060", general:"#6b7280" };
+
+/* Map stage2 domain → agent backend key */
+const DOMAIN_TO_AGENT_KEY = {
+  healthcare:"healthcare", finance:"finance", hr:"hr", insurance:"insurance",
+  education:"education", government:"political", political:"political",
+  legal:"hr", technology:"general", other:"general",
+};
+
+function resolveAgentMeta(doc) {
+  const raw = doc.domain ? doc.domain.toLowerCase() : null;
+  const key = raw ? (DOMAIN_TO_AGENT_KEY[raw] || "general") : null;
+  if (key) {
+    const entry = AGENT_BACKEND_FALLBACK_CATALOG[key] || {};
+    return { key, label: entry.title || key, icon: AGENT_ICONS[key] || "🤖", color: AGENT_COLORS[key] || "#6b7280" };
+  }
+  return { key: "general", label: "Pending Analysis", icon: "📋", color: "#6b7280" };
+}
+
+/* ── Scenario metadata (Agent Evaluation cards only) ──────── */
 const SCENARIO_META = {
   decision:   { label: "Decision-making Agent",          icon: "⚖️",  color: "#6366f1" },
   scheduling: { label: "Scheduling Agent",               icon: "📅",  color: "#06b6d4" },
@@ -41,24 +62,21 @@ const VECTOR_LABELS = {
 
 /* ── Pipeline Run Card (MalDoc creation) ──────────────────── */
 function PipelineRunCard({ doc, onClick }) {
-  const status    = doc.stage_status || {};
-  const scenario  = doc.scenario;
-  const scenMeta  = scenario
-    ? (SCENARIO_META[scenario.scenario] || { label: scenario.scenario_label || scenario.scenario || "Unknown", icon: "📋", color: "#6366f1" })
-    : { label: "Unknown", icon: "📋", color: "#6366f1" };
-  const docIdShort    = (doc.doc_id || "").slice(0, 8) + "…";
+  const status         = doc.stage_status || {};
+  const agentMeta      = resolveAgentMeta(doc);
+  const docIdShort     = (doc.doc_id || "").slice(0, 8) + "…";
   const completedCount = STAGE_STEPS.filter(s => status[s.key]).length;
   const allDone        = completedCount === STAGE_STEPS.length;
 
   return h("article", { className: `pipeline-run-card${allDone ? " all-done" : ""}`, onClick },
     /* Top row */
     h("div", { className: "pipeline-run-card-top" },
-      h("span", { className: "run-card-icon" }, scenMeta.icon),
+      h("span", { className: "run-card-icon" }, agentMeta.icon),
       h("span", { className: "pipeline-run-progress-badge" }, `${completedCount}/${STAGE_STEPS.length} stages`),
     ),
 
-    /* Title */
-    h("h4", { className: "run-card-title" }, scenMeta.label),
+    /* Title — matches evaluation screen agent name */
+    h("h4", { className: "run-card-title" }, agentMeta.label),
 
     /* Doc ID */
     h("code", { className: "run-card-docid" }, docIdShort),
@@ -88,10 +106,7 @@ function PipelineDetailDrawer({ doc, onClose }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const scenario  = doc.scenario;
-  const scenMeta  = scenario
-    ? (SCENARIO_META[scenario.scenario] || { label: scenario.scenario_label || scenario.scenario || "Unknown", icon: "📋", color: "#6366f1" })
-    : { label: "Unknown", icon: "📋", color: "#6366f1" };
+  const agentMeta = resolveAgentMeta(detail || doc);
   const status    = doc.stage_status || {};
   const completedCount = STAGE_STEPS.filter(s => status[s.key]).length;
 
@@ -111,9 +126,9 @@ function PipelineDetailDrawer({ doc, onClose }) {
       /* Header */
       h("div", { className: "run-detail-header" },
         h("div", { className: "run-detail-title-row" },
-          h("span", { className: "run-detail-icon" }, scenMeta.icon),
+          h("span", { className: "run-detail-icon" }, agentMeta.icon),
           h("div", null,
-            h("h3", null, scenMeta.label),
+            h("h3", null, agentMeta.label),
             h("code", { className: "run-detail-docid" }, doc.doc_id || ""),
           ),
         ),

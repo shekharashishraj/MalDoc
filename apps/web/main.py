@@ -226,6 +226,19 @@ async def upload_pdf(file: UploadFile = File(...)) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+def _read_doc_domain(doc_dir: Path) -> str | None:
+    """Read the domain field from stage2 analysis.json, if available."""
+    import json as _json
+    analysis_path = doc_dir / "stage2" / "openai" / "analysis.json"
+    if analysis_path.is_file():
+        try:
+            data = _json.loads(analysis_path.read_text(encoding="utf-8"))
+            return data.get("domain")
+        except Exception:
+            pass
+    return None
+
+
 @app.get("/api/docs")
 def docs(base_root: str = Query(str(PIPELINE_RUN_ROOT))) -> dict[str, Any]:
     try:
@@ -239,6 +252,7 @@ def docs(base_root: str = Query(str(PIPELINE_RUN_ROOT))) -> dict[str, Any]:
                     "base_dir": str(doc_dir.resolve()),
                     "stage_status": get_doc_stage_status(doc_dir),
                     "scenario": spec,
+                    "domain": _read_doc_domain(doc_dir),
                 }
             )
         return {"items": items, "count": len(items)}
