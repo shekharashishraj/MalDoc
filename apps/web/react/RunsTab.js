@@ -4,6 +4,15 @@ import { apiGet } from "./api.js";
 import { DEFAULT_PIPELINE_RUN_ROOT } from "./constants.js";
 import { MetricsChart, FieldDiffSection } from "./EvaluationTab.js";
 
+/* ── Stage metadata ────────────────────────────────────────── */
+const STAGE_STEPS = [
+  { key: "stage1", label: "Extract",  short: "S1" },
+  { key: "stage2", label: "Analyze",  short: "S2" },
+  { key: "stage3", label: "Plan",     short: "S3" },
+  { key: "stage4", label: "Inject",   short: "S4" },
+  { key: "stage5", label: "Eval",     short: "S5" },
+];
+
 const h = React.createElement;
 
 /* ── Scenario metadata ─────────────────────────────────────── */
@@ -29,6 +38,49 @@ const VECTOR_LABELS = {
   persistence_poisoning:    { label: "Persistence",      icon: "💾" },
   resource_inflation:       { label: "Resource Inflate", icon: "📈" },
 };
+
+/* ── Pipeline Run Card (MalDoc creation) ──────────────────── */
+function PipelineRunCard({ doc }) {
+  const status    = doc.stage_status || {};
+  const scenario  = doc.scenario;
+  const scenMeta  = scenario
+    ? (SCENARIO_META[scenario.scenario] || { label: scenario.scenario_label || scenario.scenario || "Unknown", icon: "📋", color: "#6366f1" })
+    : { label: "Unknown", icon: "📋", color: "#6366f1" };
+  const docIdShort    = (doc.doc_id || "").slice(0, 8) + "…";
+  const completedCount = STAGE_STEPS.filter(s => status[s.key]).length;
+  const allDone        = completedCount === STAGE_STEPS.length;
+
+  return h("article", { className: `pipeline-run-card${allDone ? " all-done" : ""}` },
+    /* Top row */
+    h("div", { className: "pipeline-run-card-top" },
+      h("span", { className: "run-card-icon" }, scenMeta.icon),
+      h("span", { className: "pipeline-run-progress-badge" }, `${completedCount}/${STAGE_STEPS.length} stages`),
+    ),
+
+    /* Title */
+    h("h4", { className: "run-card-title" }, scenMeta.label),
+
+    /* Doc ID */
+    h("code", { className: "run-card-docid" }, docIdShort),
+
+    /* Stage pipeline bar */
+    h("div", { className: "pipeline-stage-bar" },
+      STAGE_STEPS.map(s =>
+        h("div", { key: s.key, className: `pipeline-stage-step${status[s.key] ? " done" : " pending"}` },
+          h("div", { className: "pipeline-stage-dot" }, status[s.key] ? "✓" : "○"),
+          h("div", { className: "pipeline-stage-label" }, s.short),
+        ),
+      ),
+    ),
+
+    /* Footer hint */
+    h("div", { className: "pipeline-run-card-footer" },
+      allDone
+        ? h("span", { className: "pipeline-run-status done" }, "✓ Complete")
+        : h("span", { className: "pipeline-run-status partial" }, `Running stage ${completedCount + 1}…`),
+    ),
+  );
+}
 
 /* ── Run Detail Drawer ─────────────────────────────────────── */
 function RunDetailDrawer({ run, onClose }) {
@@ -195,12 +247,23 @@ function RunCard({ run, onClick }) {
 /* ── RunsTab ───────────────────────────────────────────────── */
 export default function RunsTab() {
   const { state, dispatch } = useAppState();
-  const items = state.runs || [];
-  const [selected, setSelected] = useState(null);
+  const evalRuns      = state.runs || [];
+  const [pipelineDocs, setPipelineDocs] = useState([]);
+  const [selected, setSelected]         = useState(null);
 
-  const refreshRuns = useCallback(async () => {
+  const refreshAll = useCallback(async () => {
+    const root = encodeURIComponent(state.baseRoot || DEFAULT_PIPELINE_RUN_ROOT);
+
+    /* MalDoc creation runs */
     try {
-      const root = encodeURIComponent(state.baseRoot || DEFAULT_PIPELINE_RUN_ROOT);
+      const payload = await apiGet(`/api/docs?base_root=${root}`);
+      setPipelineDocs(payload.items || []);
+    } catch (_) {
+      setPipelineDocs([]);
+    }
+
+    /* Agent evaluation runs */
+    try {
       const payload = await apiGet(`/api/runs/docs?base_root=${root}`);
       dispatch({ type: "SET_RUNS", payload: payload.items || [] });
     } catch (_) {
@@ -208,36 +271,63 @@ export default function RunsTab() {
     }
   }, [state.baseRoot, dispatch]);
 
-  /* Auto-refresh on mount */
-  useEffect(() => { refreshRuns(); }, []);
+  useEffect(() => { refreshAll(); }, []);
 
   return h("section", { id: "runs", className: "tab-panel active" },
+    /* ── Page header ── */
     h("div", { className: "panel-header" },
       h("div", { className: "panel-title-row" },
         h("h2", null, "Runs"),
-        h("span", { className: "runs-count-badge" }, `${items.length} run${items.length !== 1 ? "s" : ""}`),
       ),
     ),
 
     h("div", { className: "runs-toolbar" },
-      h("button", { className: "btn btn-secondary", onClick: refreshRuns }, "↺  Refresh Runs"),
+      h("button", { className: "btn btn-secondary", onClick: refreshAll }, "↺  Refresh"),
     ),
 
-    items.length === 0
-      ? h("div", { className: "runs-empty" },
-          h("div", { className: "runs-empty-icon" }, "📋"),
-          h("p", null, "No evaluation runs yet."),
-          h("p", { className: "hint" }, "Run a pipeline then evaluate to see results here."),
-        )
-      : h("div", { className: "runs-grid" },
-          items.map((run, i) =>
-            h(RunCard, {
-              key: run.doc_id || i,
-              run,
-              onClick: () => setSelected(run),
-            }),
+    /* ── Section 1: MalDoc Creation Runs ── */
+    h("div", { className: "runs-section" },
+      h("div", { className: "runs-section-header" },
+        h("h3", null, "🛠 MalDoc Creation Runs"),
+        h("span", { className: "runs-count-badge" },
+          `${pipelineDocs.length} run${pipelineDocs.length !== 1 ? "s" : ""}`),
+      ),
+      pipelineDocs.length === 0
+        ? h("div", { className: "runs-empty" },
+            h("div", { className: "runs-empty-icon" }, "🛠"),
+            h("p", null, "No pipeline runs yet."),
+            h("p", { className: "hint" }, "Run the pipeline on a PDF to see MalDoc creation progress here."),
+          )
+        : h("div", { className: "runs-grid" },
+            pipelineDocs.map((doc, i) =>
+              h(PipelineRunCard, { key: doc.doc_id || i, doc }),
+            ),
           ),
-        ),
+    ),
+
+    /* ── Section 2: Agent Evaluation Runs ── */
+    h("div", { className: "runs-section" },
+      h("div", { className: "runs-section-header" },
+        h("h3", null, "🔍 Agent Evaluation Runs"),
+        h("span", { className: "runs-count-badge" },
+          `${evalRuns.length} run${evalRuns.length !== 1 ? "s" : ""}`),
+      ),
+      evalRuns.length === 0
+        ? h("div", { className: "runs-empty" },
+            h("div", { className: "runs-empty-icon" }, "🔍"),
+            h("p", null, "No evaluation runs yet."),
+            h("p", { className: "hint" }, "Run an agent evaluation to see results here."),
+          )
+        : h("div", { className: "runs-grid" },
+            evalRuns.map((run, i) =>
+              h(RunCard, {
+                key: run.doc_id || i,
+                run,
+                onClick: () => setSelected(run),
+              }),
+            ),
+          ),
+    ),
 
     selected && h(RunDetailDrawer, { run: selected, onClose: () => setSelected(null) }),
   );

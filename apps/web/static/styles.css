@@ -2636,3 +2636,147 @@ footer code { background: var(--bg-elevated); padding: 2px 6px; border-radius: 4
 .run-raw-json summary::-webkit-details-marker { display: none; }
 .run-raw-json summary::before { content: "▶ "; font-size: 10px; }
 .run-raw-json[open] summary::before { content: "▼ "; }
+
+/* ── Runs Section Headers ───────────────────────────────────── */
+.runs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.runs-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.runs-section-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.01em;
+}
+
+/* ── Pipeline Run Card ──────────────────────────────────────── */
+.pipeline-run-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.pipeline-run-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #6366f1, #06b6d4);
+  opacity: 0.5;
+}
+
+.pipeline-run-card.all-done::before {
+  opacity: 1;
+  background: linear-gradient(90deg, #10b981, #06b6d4);
+}
+
+.pipeline-run-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.12);
+}
+
+.pipeline-run-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pipeline-run-progress-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Pipeline Stage Bar ─────────────────────────────────────── */
+.pipeline-stage-bar {
+  display: flex;
+  gap: 4px;
+  align-items: stretch;
+}
+
+.pipeline-stage-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border-radius: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.pipeline-stage-step.done {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.pipeline-stage-dot {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.pipeline-stage-step.done .pipeline-stage-dot {
+  color: #10b981;
+}
+
+.pipeline-stage-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.pipeline-stage-step.done .pipeline-stage-label {
+  color: #10b981;
+}
+
+/* ── Pipeline Run Card Footer ───────────────────────────────── */
+.pipeline-run-card-footer {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.pipeline-run-status {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pipeline-run-status.done {
+  color: #10b981;
+}
+
+.pipeline-run-status.partial {
+  color: var(--text-secondary);
+}

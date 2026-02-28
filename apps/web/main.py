@@ -55,7 +55,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/static", StaticFiles(directory=str(ROOT_DIR / "static")), name="static")
-app.mount("/react", StaticFiles(directory=str(ROOT_DIR / "react")), name="react")
+
+# Serve /react/* with no-cache headers so browsers always fetch fresh JS modules
+_REACT_DIR = ROOT_DIR / "react"
+
+@app.get("/react/{filepath:path}")
+async def serve_react(filepath: str):
+    full = _REACT_DIR / filepath
+    if not full.is_file():
+        raise HTTPException(status_code=404)
+    resp = FileResponse(str(full))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 class PipelineRunRequest(BaseModel):
