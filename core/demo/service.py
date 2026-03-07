@@ -10,14 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from core.demo.agent_backend_eval import run_agent_backend_doc_eval
-from core.extract import PyMuPDFExtractor
-from core.stage2 import run_stage2_openai
-from core.stage3 import run_stage3_openai
-from core.stage4 import run_stage4
-from core.stage5 import run_stage5_batch
 from core.stage5.orchestrator import load_demo_doc_ids, load_scenario_specs
-from pipeline.graph import run_parse_pdf
 
 log = logging.getLogger("maldoc.demo.service")
 
@@ -279,6 +272,7 @@ def prepare_stage5_uploaded_docs(
     shutil.copy2(original_source, original_target)
     shutil.copy2(adversarial_source, adversarial_target)
 
+    from core.extract.pymupdf_extractor import PyMuPDFExtractor  # lazy
     parse_dir = base_dir / "byte_extraction" / "pymupdf"
     extractor = PyMuPDFExtractor()
     extractor.extract(str(original_target), parse_dir)
@@ -300,6 +294,7 @@ def run_stage1(
     run_types: list[str],
 ) -> tuple[Path, StageStatus]:
     """Execute Stage 1 parsing."""
+    from pipeline.graph import run_parse_pdf  # lazy: avoids loading docling at startup
     pdf_path = Path(pdf_path)
     run_root = normalize_pipeline_out_root(out_root)
     run_root.mkdir(parents=True, exist_ok=True)
@@ -325,6 +320,7 @@ def run_stage2(
     api_key: str,
 ) -> StageStatus:
     """Execute Stage 2 analysis."""
+    from core.stage2 import run_stage2_openai  # lazy
     log.info("Stage 2 start. base_dir=%s model=%s", base_dir, model)
     result = run_stage2_openai(base_dir, model=model, api_key=api_key)
     out_path = str(result.get("output_path"))
@@ -344,6 +340,7 @@ def run_stage3(
     api_key: str,
 ) -> StageStatus:
     """Execute Stage 3 planning."""
+    from core.stage3 import run_stage3_openai  # lazy
     log.info("Stage 3 start. base_dir=%s model=%s", base_dir, model)
     result = run_stage3_openai(base_dir, model=model, api_key=api_key)
     out_path = str(result.get("output_path"))
@@ -364,6 +361,7 @@ def run_stage4_with_mechanism(
     priority_filter: str | None = None,
 ) -> StageStatus:
     """Execute Stage 4 using planner-selected mechanism mapping (or optional override)."""
+    from core.stage4 import run_stage4  # lazy
     log.info(
         "Stage 4 requested. base_dir=%s source_pdf=%s mechanism=%s priority_filter=%s",
         base_dir,
@@ -448,6 +446,7 @@ def run_stage5_doc_eval(
         trials,
         out_subdir,
     )
+    from core.demo.agent_backend_eval import run_agent_backend_doc_eval  # lazy
     # model is currently controlled by core/agent-backend internals (gpt-4o).
     del model
     result = run_agent_backend_doc_eval(
@@ -485,6 +484,7 @@ def run_stage5_batch_eval(
         trials,
         out_dir,
     )
+    from core.stage5 import run_stage5_batch  # lazy
     result = run_stage5_batch(
         base_root=base_root,
         doc_ids=doc_ids,

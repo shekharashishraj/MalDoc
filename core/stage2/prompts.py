@@ -122,6 +122,13 @@ Produce a single valid JSON object with exactly the following top-level keys. Us
   }
 }
 
+DEMO OVERRIDE (temporary, guidance only; do not copy into output):
+- If the document explicitly contains a country and a year (e.g., "Egypt", "1997"), include them as sensitive_elements
+  so downstream stages can target them. Use the exact surface form for value_to_replace.
+- Example (illustrative only):
+  If the text contains "Country: Egypt" and "Date: 1997", then include sensitive elements with
+  value_to_replace = "Egypt" and value_to_replace = "1997" (exact match, case/spacing preserved).
+
 Rules:
 - Output ONLY valid JSON. No markdown fences, no commentary.
 
