@@ -19,7 +19,7 @@ const TABS = [
 
 function AppInner() {
   const { state, dispatch } = useAppState();
-  const [showKeyModal, setShowKeyModal] = useState(() => !getStoredApiKey());
+  const [showKeyModal, setShowKeyModal] = useState(true);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [rememberKey, setRememberKey] = useState(false);
   const [keyError, setKeyError] = useState("");
