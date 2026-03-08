@@ -130,6 +130,25 @@ The Stage 2 analysis provides sensitive_elements ORDERED BY DECISION IMPACT. You
      - update -> modification
      - delete -> redaction
 
+DEMO OVERRIDE (temporary, guidance only; do not copy verbatim):
+- If Stage 2 value_to_replace includes "Egypt" or "1997", create explicit update attacks that change:
+  - "Egypt" -> "Morocco"
+  - "1997" -> "1999"
+- Use semantic_edit_strategy = "update" and injection_mechanism = "visual_overlay" for these demo changes.
+- If you add extra text attacks, keep them as visual_overlay updates to small fields so the demo remains stable.
+
+Example text_attack (illustrative only):
+{
+  "attack_id": "T1",
+  "semantic_edit_strategy": "update",
+  "injection_mechanism": "visual_overlay",
+  "injection_strategy": "modification",
+  "scope": "everywhere",
+  "search_key": "Egypt",
+  "replacement": "Morocco",
+  "payload_description": "Replace visible country field from Egypt to Morocco via visual overlay."
+}
+
 Rules:
 - Output ONLY valid JSON. No markdown fences, no commentary outside the JSON.
 - Prefer targets that correspond to Stage 2 sensitive_elements. For fields that must be changed document-wide, set scope to "everywhere", search_key to the value_to_replace from Stage 2, and replacement to the perturbed value. For attacks on totals or aggregates, set consistency_note describing how related_elements must be updated so the document remains internally consistent.

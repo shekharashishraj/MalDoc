@@ -7,11 +7,6 @@ from typing import Any, Literal
 
 from langgraph.graph import END, StateGraph
 
-from core.extract.docling_extractor import DoclingExtractor
-from core.extract.mistral_extractor import MistralExtractor
-from core.extract.pymupdf_extractor import PyMuPDFExtractor
-from core.extract.tesseract_extractor import TesseractExtractor
-
 
 def _run_type_key(run_type: str, sub_mechanism: str) -> str:
     return f"{run_type}/{sub_mechanism}"
@@ -19,6 +14,12 @@ def _run_type_key(run_type: str, sub_mechanism: str) -> str:
 
 def parse_pdf_node(state: dict[str, Any]) -> dict[str, Any]:
     """Run all extractors and write under base_dir/run_type/sub_mechanism."""
+    # Lazy imports so heavy ML libraries (docling, mistralai) load on first use, not at startup
+    from core.extract.pymupdf_extractor import PyMuPDFExtractor
+    from core.extract.tesseract_extractor import TesseractExtractor
+    from core.extract.docling_extractor import DoclingExtractor
+    from core.extract.mistral_extractor import MistralExtractor
+
     pdf_path = state["pdf_path"]
     base_dir = Path(state["base_dir"])
     run_types = state.get("run_types") or ["byte_extraction", "ocr", "vlm"]
